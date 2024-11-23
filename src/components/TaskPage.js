@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Cookies from 'js-cookie';
 import axios from 'axios';
 import {
@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank, Download } from '@mui/icons-material';
 
-const API_BASE = 'https://northamerica-northeast2-serverless-442504.cloudfunctions.net';
+const API_BASE = 'https://northamerica-northeast2-serverless-442504.cloudfunctions.net'; // Replace with your base API URL
 
 function TaskPage() {
   const userId = Cookies.get('userId');
@@ -32,15 +32,17 @@ function TaskPage() {
     file: null,
   });
 
-  const fetchTasks = async () => {
+  // Memoize fetchTasks using useCallback to avoid dependency issues
+  const fetchTasks = useCallback(async () => {
     try {
       const response = await axios.post(`${API_BASE}/get_tasks`, { userId });
       setTasks(response.data.tasks);
     } catch (err) {
       console.error('Error fetching tasks:', err);
     }
-  };
+  }, [userId]);
 
+  // Create a new task
   const createTask = async () => {
     const formData = new FormData();
     formData.append('userId', userId);
@@ -55,22 +57,24 @@ function TaskPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
+      // Assume the API returns the created task object with the same structure as existing tasks
       const createdTask = {
         taskId: response.data.taskId || 'temp-id',
         title: newTask.title,
         description: newTask.description,
         dueDate: newTask.dueDate,
-        status: 'Pending', 
+        status: 'Pending', // Default status for a new task
         attachments: newTask.file ? [response.data.fileUrl] : [],
       };
 
-      setTasks((prevTasks) => [createdTask, ...prevTasks]); 
+      setTasks((prevTasks) => [createdTask, ...prevTasks]); // Add the new task to the top of the list
       setNewTask({ title: '', description: '', dueDate: '', file: null });
     } catch (err) {
       console.error('Error creating task:', err);
     }
   };
 
+  // Delete a task
   const deleteTask = async (taskId) => {
     try {
       await axios.post(`${API_BASE}/delete_task`, { taskId });
@@ -80,6 +84,7 @@ function TaskPage() {
     }
   };
 
+  // Update task status
   const updateTaskStatus = async (taskId, status) => {
     try {
       await axios.post(`${API_BASE}/update_task_status`, { taskId, status });
@@ -95,10 +100,11 @@ function TaskPage() {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [fetchTasks]); // fetchTasks is now a dependency
 
   return (
     <>
+      {/* Top AppBar with Welcome Message */}
       <AppBar position="static" color="primary">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -107,13 +113,16 @@ function TaskPage() {
         </Toolbar>
       </AppBar>
 
+      {/* Main Content */}
       <Container maxWidth="lg" sx={{ marginTop: 4 }}>
         <Typography variant="h4" gutterBottom>
           My Tasks
         </Typography>
 
+        {/* Task List */}
         <Paper elevation={3} sx={{ padding: 4, maxHeight: 600, overflow: 'auto' }}>
           <Grid container spacing={2} direction="column">
+            {/* Create Task Form */}
             <Grid item xs={12}>
               <Card>
                 <CardContent>
@@ -152,6 +161,7 @@ function TaskPage() {
               </Card>
             </Grid>
 
+            {/* Existing Tasks */}
             {tasks.map((task) => (
               <Grid item xs={12} key={task.taskId}>
                 <Card>
@@ -160,6 +170,7 @@ function TaskPage() {
                     <Typography>{task.description || 'No description provided'}</Typography>
                     <Typography>Due: {task.dueDate || 'No due date specified'}</Typography>
                     <Box display="flex" alignItems="center" gap={1} marginTop={2}>
+                      {/* Status Icon */}
                       {task.status === 'Completed' ? (
                         <CheckBox color="success" />
                       ) : (
