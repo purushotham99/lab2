@@ -17,9 +17,11 @@ function AuthPage() {
 
   const handleLogin = () => {
     if (userId && email) {
-      Cookies.set('userId', userId, { expires: 7 }); 
-      Cookies.set('email', email, { expires: 7 }); 
+      // Set cookies for userId and email
+      Cookies.set('userId', userId, { expires: 7 });
+      Cookies.set('email', email, { expires: 7 });
 
+      // Navigate to tasks page
       navigate('/tasks');
     } else {
       alert('Please enter both User ID and Email!');
