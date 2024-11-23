@@ -1,24 +1,19 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import AuthPage from './components/AuthPage';
+import TaskPage from './components/TaskPage';
 
 function App() {
+  const userId = Cookies.get('userId');
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={userId ? <Navigate to="/tasks" /> : <AuthPage />} />
+        <Route path="/tasks" element={userId ? <TaskPage /> : <Navigate to="/" />} />
+      </Routes>
+    </Router>
   );
 }
 
